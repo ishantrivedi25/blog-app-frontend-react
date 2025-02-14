@@ -12,6 +12,9 @@ import Search from "./pages/Search";
 import PostPage from "./pages/PostPage";
 import PrivateRoute from "./components/PrivateRoute";
 import Dashboard from "./pages/Dashboard";
+import CreatePost from "./pages/CreatePost";
+import UpdatePost from "./pages/UpdatePost";
+import OnlyAdminPrivateRoute from "./components/OnlyAdminPrivateRoute";
 
 function App() {
   return (
@@ -30,6 +33,10 @@ function App() {
         </Route>
 
         <Route path="/post/:postSlug" element={<PostPage />} />
+        <Route element={<OnlyAdminPrivateRoute />}>
+          <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/update-post/:postId" element={<UpdatePost />} />
+        </Route>
       </Routes>
       <Footer />
     </BrowserRouter>
