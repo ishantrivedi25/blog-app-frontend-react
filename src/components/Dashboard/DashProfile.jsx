@@ -24,6 +24,7 @@ import {
   deleteUserFailure,
   signoutSuccess,
 } from "../../redux/user/userSlice";
+import { deleteUser, signout, updateUser } from "../../api/userService";
 
 export default function DashProfile() {
   const { currentUser, error, loading } = useSelector((state) => state.user);
@@ -72,6 +73,8 @@ export default function DashProfile() {
         setImageFileUploadProgress(progress.toFixed(0));
       },
       (error) => {
+        console.error(error);
+
         setImageFileUploadError(
           "Could not upload image (File must be less than 2MB)"
         );
@@ -113,21 +116,13 @@ export default function DashProfile() {
     try {
       dispatch(updateStart());
 
-      const res = await fetch(`/api/user/update/${currentUser._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await updateUser(currentUser._id, formData); // API service function
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        dispatch(updateFailure(data.message));
-        setUpdateUserError(data.message);
+      if (response.status === "error") {
+        dispatch(updateFailure(response.message));
+        setUpdateUserError(response.message);
       } else {
-        dispatch(updateSuccess(data));
+        dispatch(updateSuccess(response.data));
         setUpdateUserSuccess("User's profile updated successfully");
       }
     } catch (error) {
@@ -142,16 +137,12 @@ export default function DashProfile() {
     try {
       dispatch(deleteUserStart());
 
-      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
-        method: "DELETE",
-      });
+      const response = await deleteUser(currentUser._id);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        dispatch(deleteUserFailure(data.message));
+      if (response.status === "error") {
+        dispatch(deleteUserFailure(response.message));
       } else {
-        dispatch(deleteUserSuccess(data));
+        dispatch(deleteUserSuccess(response.data));
       }
     } catch (error) {
       dispatch(deleteUserFailure(error.message));
@@ -160,13 +151,10 @@ export default function DashProfile() {
 
   const handleSignout = async () => {
     try {
-      const res = await fetch("/api/user/signout", {
-        method: "POST",
-      });
+      const response = await signout();
 
-      const data = await res.json();
-      if (!res.ok) {
-        console.log(data.message);
+      if (response.status === "error") {
+        console.log(response.message);
       } else {
         dispatch(signoutSuccess());
       }
@@ -302,7 +290,7 @@ export default function DashProfile() {
             </h3>
             <div className="flex justify-center gap-4">
               <Button color="failure" onClick={handleDeleteUser}>
-                Yes, I'm sure
+                {"Yes, I'm sure"}
               </Button>
               <Button color="gray" onClick={() => setShowModal(false)}>
                 No, cancel

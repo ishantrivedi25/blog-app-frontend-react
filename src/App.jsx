@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import CreatePost from "./pages/CreatePost";
 import UpdatePost from "./pages/UpdatePost";
 import OnlyAdminPrivateRoute from "./components/OnlyAdminPrivateRoute";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -37,6 +38,9 @@ function App() {
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/update-post/:postId" element={<UpdatePost />} />
         </Route>
+
+        {/* 404 - Page Not Found */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
     </BrowserRouter>

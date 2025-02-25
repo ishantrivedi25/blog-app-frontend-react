@@ -15,6 +15,7 @@ import "react-circular-progressbar/dist/styles.css";
 import { useSelector } from "react-redux";
 
 import { app } from "../firebase";
+import { getPosts, updatePost } from "../api/postService";
 
 export default function UpdatePost() {
   const [file, setFile] = useState(null);
@@ -28,25 +29,24 @@ export default function UpdatePost() {
   const { currentUser } = useSelector((state) => state.user);
 
   useEffect(() => {
-    try {
-      const fetchPost = async () => {
-        const res = await fetch(`/api/post/getposts?postId=${postId}`);
-        const data = await res.json();
-        if (!res.ok) {
-          console.log(data.message);
-          setPublishError(data.message);
+    const fetchPostById = async () => {
+      try {
+        const response = await getPosts({ postId });
+
+        if (response.status === "error") {
+          console.log(response.message);
+          setPublishError(response.message);
           return;
         }
-        if (res.ok) {
-          setPublishError(null);
-          setFormData(data.posts[0]);
-        }
-      };
 
-      fetchPost();
-    } catch (error) {
-      console.log(error.message);
-    }
+        setPublishError(null);
+        setFormData(response.data.posts[0]);
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+
+    fetchPostById();
   }, [postId]);
 
   const handleUpdloadImage = async () => {
@@ -91,27 +91,15 @@ export default function UpdatePost() {
     e.preventDefault();
 
     try {
-      const res = await fetch(
-        `/api/post/updatepost/${formData._id}/${currentUser._id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-      const data = await res.json();
+      const response = await updatePost(formData._id, formData);
 
-      if (!res.ok) {
-        setPublishError(data.message);
+      if (response.status === "error") {
+        setPublishError(response.message);
         return;
       }
 
-      if (res.ok) {
-        setPublishError(null);
-        navigate(`/post/${data.slug}`);
-      }
+      setPublishError(null);
+      navigate(`/post/${response.data.slug}`);
     } catch (error) {
       setPublishError("Something went wrong");
     }
@@ -140,12 +128,16 @@ export default function UpdatePost() {
             value={formData.category}
           >
             <option value="uncategorized">Select a category</option>
-            <option value="javascript">JavaScript</option>
-            <option value="reactjs">React.js</option>
-            <option value="nextjs">Next.js</option>
+            <option value="technology">Technology</option>
+            <option value="education">Education</option>
+            <option value="finance">Finance</option>
+            <option value="music">Music</option>
+            <option value="food">Food</option>
+            <option value="sports">Sports</option>
+            <option value="gaming">Gaming</option>
           </Select>
         </div>
-        <div className="flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3">
+        <div className="flex gap-4 items-center justify-between border-2 border-indigo-400 border-dashed p-3">
           <FileInput
             type="file"
             accept="image/*"

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 
 import OAuth from "../components/OAuth";
+import { signup } from "../api/authService";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
@@ -26,23 +27,15 @@ export default function SignUp() {
       setLoading(true);
       setErrorMessage(null);
 
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await signup(formData);
 
-      const data = await res.json();
-
-      if (data.success === false) {
-        return setErrorMessage(data.message);
+      if (response.status === "error") {
+        setLoading(false);
+        return setErrorMessage(response.message);
       }
 
       setLoading(false);
-
-      if (res.ok) {
-        navigate("/sign-in");
-      }
+      navigate("/sign-in");
     } catch (error) {
       setErrorMessage(error.message);
       setLoading(false);

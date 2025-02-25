@@ -4,6 +4,7 @@ import { Modal, Table, Button } from "flowbite-react";
 import { useSelector } from "react-redux";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import { FaCheck, FaTimes } from "react-icons/fa";
+import { deleteUser, getUsers } from "../../api/userService";
 
 export default function DashUsers() {
   const { currentUser } = useSelector((state) => state.user);
@@ -15,12 +16,11 @@ export default function DashUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`/api/user/getusers`);
-        const data = await res.json();
+        const response = await getUsers();
 
-        if (res.ok) {
-          setUsers(data.users);
-          if (data.users.length < 9) {
+        if (response.status === "success") {
+          setUsers(response.data.users);
+          if (response.data.users.length < 9) {
             setShowMore(false);
           }
         }
@@ -38,12 +38,11 @@ export default function DashUsers() {
     const startIndex = users.length;
 
     try {
-      const res = await fetch(`/api/user/getusers?startIndex=${startIndex}`);
-      const data = await res.json();
+      const response = await getUsers({ startIndex });
 
-      if (res.ok) {
-        setUsers((prev) => [...prev, ...data.users]);
-        if (data.users.length < 9) {
+      if (response.status === "success") {
+        setUsers((prev) => [...prev, ...response.data.users]);
+        if (response.data.users.length < 9) {
           setShowMore(false);
         }
       }
@@ -54,17 +53,13 @@ export default function DashUsers() {
 
   const handleDeleteUser = async () => {
     try {
-      const res = await fetch(`/api/user/delete/${userIdToDelete}`, {
-        method: "DELETE",
-      });
+      const response = await deleteUser(userIdToDelete); // API service function
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (response.status === "success") {
         setUsers((prev) => prev.filter((user) => user._id !== userIdToDelete));
         setShowModal(false);
       } else {
-        console.log(data.message);
+        console.log(response.message);
       }
     } catch (error) {
       console.log(error.message);
@@ -124,7 +119,7 @@ export default function DashUsers() {
           {showMore && (
             <button
               onClick={handleShowMore}
-              className="w-full text-teal-500 self-center text-sm py-7"
+              className="w-full text-indigo-400 self-center text-sm py-7"
             >
               Show more
             </button>

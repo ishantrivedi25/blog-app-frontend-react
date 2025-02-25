@@ -5,6 +5,9 @@ import { FaThumbsUp } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import { Button, Textarea } from "flowbite-react";
 
+import { editComment } from "../../api/commentService";
+import { getUser } from "../../api/userService";
+
 export default function Comment({ comment, onLike, onEdit, onDelete }) {
   const [user, setUser] = useState({});
   const [isEditing, setIsEditing] = useState(false);
@@ -12,18 +15,21 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
   const { currentUser } = useSelector((state) => state.user);
 
   useEffect(() => {
-    const getUser = async () => {
+    const fetchUser = async () => {
       try {
-        const res = await fetch(`/api/user/${comment.userId}`);
-        const data = await res.json();
-        if (res.ok) {
-          setUser(data);
+        const response = await getUser(comment.userId);
+
+        if (response.status === "success") {
+          setUser(response.data);
+        } else {
+          console.error("Error fetching user:", response.message);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error("Network error:", error.message);
       }
     };
-    getUser();
+
+    fetchUser();
   }, [comment]);
 
   const handleEdit = () => {
@@ -33,22 +39,18 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`/api/comment/editComment/${comment._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: editedContent,
-        }),
+      const response = await editComment(comment._id, {
+        content: editedContent,
       });
 
-      if (res.ok) {
+      if (response.status === "success") {
         setIsEditing(false);
         onEdit(comment, editedContent);
+      } else {
+        console.error("Error editing comment:", response.message);
       }
     } catch (error) {
-      console.log(error.message);
+      console.error("Network error:", error.message);
     }
   };
   return (
@@ -99,7 +101,7 @@ export default function Comment({ comment, onLike, onEdit, onDelete }) {
         ) : (
           <>
             <p className="text-gray-500 pb-2">{comment.content}</p>
-            <div className="flex items-center pt-2 text-xs border-t dark:border-gray-700 max-w-fit gap-2">
+            <div className="flex items-center pt-2 text-xs dark:border-gray-700 max-w-fit gap-2">
               <button
                 type="button"
                 onClick={() => onLike(comment._id)}

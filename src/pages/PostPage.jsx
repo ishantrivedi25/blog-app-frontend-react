@@ -3,14 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import { Button, Spinner } from "flowbite-react";
 
-import HeroBanner from "../components/HeroBanner";
 import CommentSection from "../components/Comment/CommentSection";
 import PostCard from "../components/PostCard";
+import { getPosts } from "../api/postService";
 
 export default function PostPage() {
   const { postSlug } = useParams();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [post, setPost] = useState(null);
   const [recentPosts, setRecentPosts] = useState(null);
 
@@ -18,22 +17,17 @@ export default function PostPage() {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/post/getposts?slug=${postSlug}`);
-        const data = await res.json();
+        const response = await getPosts({ slug: postSlug }); // API service function
 
-        if (!res.ok) {
-          setError(true);
+        if (response.status !== "success") {
           setLoading(false);
           return;
         }
 
-        if (res.ok) {
-          setPost(data.posts[0]);
-          setLoading(false);
-          setError(false);
-        }
+        setPost(response.data.posts[0]);
       } catch (error) {
-        setError(true);
+        console.error(error);
+      } finally {
         setLoading(false);
       }
     };
@@ -42,20 +36,19 @@ export default function PostPage() {
   }, [postSlug]);
 
   useEffect(() => {
-    try {
-      const fetchRecentPosts = async () => {
-        const res = await fetch(`/api/post/getposts?limit=3`);
-        const data = await res.json();
+    const fetchRecentPosts = async () => {
+      try {
+        const response = await getPosts({ limit: 3 });
 
-        if (res.ok) {
-          setRecentPosts(data.posts);
+        if (response.status === "success") {
+          setRecentPosts(response.data.posts);
         }
-      };
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
 
-      fetchRecentPosts();
-    } catch (error) {
-      console.log(error.message);
-    }
+    fetchRecentPosts();
   }, []);
 
   if (loading) {
@@ -94,9 +87,6 @@ export default function PostPage() {
         className="p-3 max-w-2xl mx-auto w-full post-content"
         dangerouslySetInnerHTML={{ __html: post && post.content }}
       ></div>
-      <div className="max-w-4xl mx-auto w-full">
-        <HeroBanner />
-      </div>
       <CommentSection postId={post._id} />
 
       <div className="flex flex-col justify-center items-center mb-5">

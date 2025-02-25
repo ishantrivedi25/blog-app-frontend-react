@@ -6,6 +6,12 @@ import { useSelector } from "react-redux";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 
 import Comment from "./Comment";
+import {
+  createComment,
+  deleteComment,
+  getPostComments,
+  likeComment,
+} from "../../api/commentService";
 
 export default function CommentSection({ postId }) {
   const { currentUser } = useSelector((state) => state.user);
@@ -24,44 +30,41 @@ export default function CommentSection({ postId }) {
     }
 
     try {
-      const res = await fetch("/api/comment/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: comment,
-          postId,
-          userId: currentUser._id,
-        }),
+      const response = await createComment({
+        content: comment,
+        postId,
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (response.status === "success") {
         setComment("");
         setCommentError(null);
-        setComments([data, ...comments]);
+        setComments([response.data, ...comments]);
+      } else {
+        setCommentError(response.message);
+        console.error("Error creating comment:", response.message);
       }
     } catch (error) {
       setCommentError(error.message);
+      console.error("Network error:", error.message);
     }
   };
 
   useEffect(() => {
-    const getComments = async () => {
+    const fetchComments = async () => {
       try {
-        const res = await fetch(`/api/comment/getPostComments/${postId}`);
+        const response = await getPostComments(postId);
 
-        if (res.ok) {
-          const data = await res.json();
-          setComments(data);
+        if (response.status === "success") {
+          setComments(response.data);
+        } else {
+          console.error("Error fetching comments:", response.message);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error("Network error:", error.message);
       }
     };
-    getComments();
+
+    fetchComments();
   }, [postId]);
 
   const handleLike = async (commentId) => {
@@ -71,26 +74,25 @@ export default function CommentSection({ postId }) {
         return;
       }
 
-      const res = await fetch(`/api/comment/likeComment/${commentId}`, {
-        method: "PUT",
-      });
+      const response = await likeComment(commentId);
 
-      if (res.ok) {
-        const data = await res.json();
+      if (response.status === "success") {
         setComments(
           comments.map((comment) =>
             comment._id === commentId
               ? {
                   ...comment,
-                  likes: data.likes,
-                  numberOfLikes: data.likes.length,
+                  likes: response.data.likes,
+                  numberOfLikes: response.data.likes.length,
                 }
               : comment
           )
         );
+      } else {
+        console.error("Error liking comment:", response.message);
       }
     } catch (error) {
-      console.log(error.message);
+      console.error("Network error:", error.message);
     }
   };
 
@@ -110,16 +112,15 @@ export default function CommentSection({ postId }) {
         return;
       }
 
-      const res = await fetch(`/api/comment/deleteComment/${commentId}`, {
-        method: "DELETE",
-      });
+      const response = await deleteComment(commentId);
 
-      if (res.ok) {
-        const data = await res.json();
+      if (response.status === "success") {
         setComments(comments.filter((comment) => comment._id !== commentId));
+      } else {
+        console.error("Error deleting comment:", response.message);
       }
     } catch (error) {
-      console.log(error.message);
+      console.error("Network error:", error.message);
     }
   };
 
@@ -141,7 +142,7 @@ export default function CommentSection({ postId }) {
           </Link>
         </div>
       ) : (
-        <div className="text-sm text-teal-500 my-5 flex gap-1">
+        <div className="text-sm text-indigo-400 my-5 flex gap-1">
           You must be signed in to comment.
           <Link className="text-blue-500 hover:underline" to={"/sign-in"}>
             Sign In
@@ -151,9 +152,10 @@ export default function CommentSection({ postId }) {
       {currentUser && (
         <form
           onSubmit={handleSubmit}
-          className="border border-teal-500 rounded-md p-3"
+          className="border border-indigo-400 rounded-md p-3"
         >
           <Textarea
+            className="p-3"
             placeholder="Add a comment..."
             rows="3"
             maxLength="200"
@@ -217,7 +219,7 @@ export default function CommentSection({ postId }) {
                 color="failure"
                 onClick={() => handleDelete(commentToDelete)}
               >
-                Yes, I'm sure
+                {"Yes, I'm sure"}
               </Button>
               <Button color="gray" onClick={() => setShowModal(false)}>
                 No, cancel

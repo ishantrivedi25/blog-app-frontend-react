@@ -7,6 +7,7 @@ import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
 
 import { signInSuccess } from "../redux/user/userSlice";
 import { app } from "../firebase";
+import { googleAuth } from "../api/authService";
 
 export default function OAuth() {
   const auth = getAuth(app);
@@ -19,19 +20,15 @@ export default function OAuth() {
 
     try {
       const resultsFromGoogle = await signInWithPopup(auth, provider);
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: resultsFromGoogle.user.displayName,
-          email: resultsFromGoogle.user.email,
-          googlePhotoUrl: resultsFromGoogle.user.photoURL,
-        }),
-      });
-      const data = await res.json();
 
-      if (res.ok) {
-        dispatch(signInSuccess(data));
+      const res = await googleAuth({
+        name: resultsFromGoogle.user.displayName,
+        email: resultsFromGoogle.user.email,
+        googlePhotoUrl: resultsFromGoogle.user.photoURL,
+      });
+
+      if (res.status === "success") {
+        dispatch(signInSuccess(res.data));
         navigate("/");
       }
     } catch (error) {

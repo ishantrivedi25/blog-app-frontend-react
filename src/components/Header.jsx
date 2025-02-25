@@ -8,9 +8,9 @@ import { useSelector, useDispatch } from "react-redux";
 
 import { toggleTheme } from "../redux/theme/themeSlice";
 import { signoutSuccess } from "../redux/user/userSlice";
+import { signout } from "../api/userService";
 
 export default function Header() {
-  const path = useLocation().pathname;
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -29,13 +29,10 @@ export default function Header() {
 
   const handleSignout = async () => {
     try {
-      const res = await fetch("/api/user/signout", {
-        method: "POST",
-      });
-      const data = await res.json();
+      const res = await signout();
 
-      if (!res.ok) {
-        console.log(data.message);
+      if (res.status === "error") {
+        console.log(res.message);
       } else {
         dispatch(signoutSuccess());
       }
@@ -126,9 +123,11 @@ export default function Header() {
         <Navbar.Link as={"div"}>
           <Link to="/about">About</Link>
         </Navbar.Link>
-        <Navbar.Link as={"div"}>
-          <Link to="/contact">Contact</Link>
-        </Navbar.Link>
+        {currentUser?.isAdmin && (
+          <Navbar.Link as={"div"}>
+            <Link to="/create-post">Write Post</Link>
+          </Navbar.Link>
+        )}
       </Navbar.Collapse>
     </Navbar>
   );

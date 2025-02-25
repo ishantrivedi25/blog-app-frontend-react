@@ -4,6 +4,7 @@ import { Select, TextInput } from "flowbite-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import PostCard from "../components/PostCard";
+import { getPosts } from "../api/postService";
 
 export default function Search() {
   const [sidebarData, setSidebarData] = useState({
@@ -22,38 +23,38 @@ export default function Search() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
-    const searchTermFromUrl = urlParams.get("searchTerm");
-    const sortFromUrl = urlParams.get("sort");
-    const categoryFromUrl = urlParams.get("category");
 
-    if (searchTermFromUrl || sortFromUrl || categoryFromUrl) {
+    const searchTerm = urlParams.get("searchTerm") || "";
+    const sort = urlParams.get("sort") || "";
+    const category = urlParams.get("category") || "";
+
+    if (searchTerm || sort || category) {
       setSidebarData({
         ...sidebarData,
-        searchTerm: searchTermFromUrl,
-        sort: sortFromUrl,
-        category: categoryFromUrl,
+        searchTerm,
+        sort,
+        category,
       });
     }
 
     const fetchPosts = async () => {
       setLoading(true);
-      const searchQuery = urlParams.toString();
-      const res = await fetch(`/api/post/getposts?${searchQuery}`);
 
-      if (!res.ok) {
-        setLoading(false);
-        return;
-      }
+      try {
+        const response = await getPosts({
+          searchTerm,
+          sort,
+          category,
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        setPosts(data.posts);
-        setLoading(false);
-        if (data.posts.length === 9) {
-          setShowMore(true);
-        } else {
-          setShowMore(false);
+        if (response.status === "success") {
+          setPosts(response.data.posts);
+          setShowMore(response.data.posts.length === 9);
         }
+      } catch (error) {
+        console.log(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -97,20 +98,16 @@ export default function Search() {
     urlParams.set("startIndex", startIndex);
 
     const searchQuery = urlParams.toString();
-    const res = await fetch(`/api/post/getposts?${searchQuery}`);
 
-    if (!res.ok) {
-      return;
-    }
+    try {
+      const response = await getPosts(searchQuery);
 
-    if (res.ok) {
-      const data = await res.json();
-      setPosts([...posts, ...data.posts]);
-      if (data.posts.length === 9) {
-        setShowMore(true);
-      } else {
-        setShowMore(false);
+      if (response.status === "success") {
+        setPosts((prev) => [...prev, ...response.data.posts]);
+        setShowMore(response.data.posts.length === 9);
       }
+    } catch (error) {
+      console.log(error.message);
     }
   };
 
@@ -145,9 +142,13 @@ export default function Search() {
               id="category"
             >
               <option value="uncategorized">Uncategorized</option>
-              <option value="reactjs">React.js</option>
-              <option value="nextjs">Next.js</option>
-              <option value="javascript">JavaScript</option>
+              <option value="technology">Technology</option>
+              <option value="education">Education</option>
+              <option value="finance">Finance</option>
+              <option value="music">Music</option>
+              <option value="food">Food</option>
+              <option value="sports">Sports</option>
+              <option value="gaming">Gaming</option>
             </Select>
           </div>
 
@@ -174,7 +175,7 @@ export default function Search() {
           {showMore && (
             <button
               onClick={handleShowMore}
-              className="text-teal-500 text-lg hover:underline p-7 w-full"
+              className="text-indigo-400 text-lg hover:underline p-7 w-full"
             >
               Show More
             </button>

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Modal, Table, Button } from "flowbite-react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { deleteComment, getComments } from "../../api/commentService";
 
 export default function DashComments() {
   const { currentUser } = useSelector((state) => state.user);
@@ -14,18 +15,19 @@ export default function DashComments() {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const res = await fetch(`/api/comment/getcomments`);
-        const data = await res.json();
+        const response = await getComments(); // Assuming getComments() is an API service function
 
-        if (res.ok) {
-          setComments(data.comments);
+        if (response.status === "success") {
+          setComments(response.data.comments);
 
-          if (data.comments.length < 9) {
+          if (response.data.comments.length < 9) {
             setShowMore(false);
           }
+        } else {
+          console.error("Error fetching comments:", response.message);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error("Network error:", error.message);
       }
     };
 
@@ -38,21 +40,19 @@ export default function DashComments() {
     const startIndex = comments.length;
 
     try {
-      const res = await fetch(
-        `/api/comment/getcomments?startIndex=${startIndex}`
-      );
+      const response = await getComments(startIndex); // Assuming getComments(startIndex) is an API service function
 
-      const data = await res.json();
+      if (response.status === "success") {
+        setComments((prev) => [...prev, ...response.data.comments]);
 
-      if (res.ok) {
-        setComments((prev) => [...prev, ...data.comments]);
-
-        if (data.comments.length < 9) {
+        if (response.data.comments.length < 9) {
           setShowMore(false);
         }
+      } else {
+        console.error("Error fetching comments:", response.message);
       }
     } catch (error) {
-      console.log(error.message);
+      console.error("Network error:", error.message);
     }
   };
 
@@ -60,25 +60,18 @@ export default function DashComments() {
     setShowModal(false);
 
     try {
-      const res = await fetch(
-        `/api/comment/deleteComment/${commentIdToDelete}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await deleteComment(commentIdToDelete);
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (response.status === "success") {
         setComments((prev) =>
           prev.filter((comment) => comment._id !== commentIdToDelete)
         );
         setShowModal(false);
       } else {
-        console.log(data.message);
+        console.error("Error deleting comment:", response.message);
       }
     } catch (error) {
-      console.log(error.message);
+      console.error("Network error:", error.message);
     }
   };
 
@@ -123,7 +116,7 @@ export default function DashComments() {
           {showMore && (
             <button
               onClick={handleShowMore}
-              className="w-full text-teal-500 self-center text-sm py-7"
+              className="w-full text-indigo-400 self-center text-sm py-7"
             >
               Show more
             </button>

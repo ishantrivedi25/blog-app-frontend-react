@@ -9,6 +9,9 @@ import {
   HiOutlineUserGroup,
 } from "react-icons/hi";
 import { Button, Table } from "flowbite-react";
+import { getUsers } from "../../api/userService";
+import { getComments } from "../../api/commentService";
+import { getPosts } from "../../api/postService";
 
 export default function DashboardComp() {
   const [users, setUsers] = useState([]);
@@ -25,43 +28,49 @@ export default function DashboardComp() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("/api/user/getusers?limit=5");
-        const data = await res.json();
-        if (res.ok) {
-          setUsers(data.users);
-          setTotalUsers(data.totalUsers);
-          setLastMonthUsers(data.lastMonthUsers);
+        const response = await getUsers({ limit: 5 });
+
+        if (response.status === "success") {
+          setUsers(response.data.users);
+          setTotalUsers(response.data.totalUsers);
+          setLastMonthUsers(response.data.lastMonthUsers);
+        } else {
+          console.error("Error fetching users:", response.message);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error("Network error:", error.message);
       }
     };
 
     const fetchPosts = async () => {
       try {
-        const res = await fetch("/api/post/getposts?limit=5");
-        const data = await res.json();
-        if (res.ok) {
-          setPosts(data.posts);
-          setTotalPosts(data.totalPosts);
-          setLastMonthPosts(data.lastMonthPosts);
+        const response = await getPosts({ limit: 5 });
+
+        if (response.status === "success") {
+          setPosts(response.data.posts);
+          setTotalPosts(response.data.totalPosts);
+          setLastMonthPosts(response.data.lastMonthPosts);
+        } else {
+          console.error("Error fetching posts:", response.message);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error("Network error:", error.message);
       }
     };
 
     const fetchComments = async () => {
       try {
-        const res = await fetch("/api/comment/getcomments?limit=5");
-        const data = await res.json();
-        if (res.ok) {
-          setComments(data.comments);
-          setTotalComments(data.totalComments);
-          setLastMonthComments(data.lastMonthComments);
+        const response = await getComments({ limit: 5 });
+
+        if (response.status === "success") {
+          setComments(response.data.comments);
+          setTotalComments(response.data.totalComments);
+          setLastMonthComments(response.data.lastMonthComments);
+        } else {
+          console.error("Error fetching comments:", response.message);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error("Network error:", error.message);
       }
     };
 

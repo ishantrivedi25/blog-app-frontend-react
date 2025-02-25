@@ -17,7 +17,7 @@ export default function HeroBanner() {
           </p>
           <Link
             to="/search"
-            className="text-xs sm:text-sm text-teal-500 font-bold hover:underline"
+            className="text-xs sm:text-sm text-indigo-400 font-bold hover:underline"
           >
             View all posts
           </Link>

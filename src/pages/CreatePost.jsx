@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Alert, Button, FileInput, Select, TextInput } from "flowbite-react";
-import ReactQuill from "react-quill";
+import ReactQuill from "react-quill-new";
 import "react-quill/dist/quill.snow.css";
 import {
   getDownloadURL,
@@ -14,6 +14,7 @@ import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 
 import { app } from "../firebase";
+import { createPost } from "../api/postService";
 
 export default function CreatePost() {
   const [file, setFile] = useState(null);
@@ -67,24 +68,15 @@ export default function CreatePost() {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/post/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
+      const response = await createPost(formData);
 
-      if (!res.ok) {
-        setPublishError(data.message);
+      if (response.status !== "success") {
+        setPublishError(response.message);
         return;
       }
 
-      if (res.ok) {
-        setPublishError(null);
-        navigate(`/post/${data.slug}`);
-      }
+      setPublishError(null);
+      navigate(`/post/${response.data.slug}`);
     } catch (error) {
       setPublishError("Something went wrong");
     }
@@ -111,12 +103,16 @@ export default function CreatePost() {
             }
           >
             <option value="uncategorized">Select a category</option>
-            <option value="javascript">JavaScript</option>
-            <option value="reactjs">React.js</option>
-            <option value="nextjs">Next.js</option>
+            <option value="technology">Technology</option>
+            <option value="education">Education</option>
+            <option value="finance">Finance</option>
+            <option value="music">Music</option>
+            <option value="food">Food</option>
+            <option value="sports">Sports</option>
+            <option value="gaming">Gaming</option>
           </Select>
         </div>
-        <div className="flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3">
+        <div className="flex gap-4 items-center justify-between border-2 border-indigo-400 border-dashed p-3">
           <FileInput
             type="file"
             accept="image/*"
@@ -159,9 +155,13 @@ export default function CreatePost() {
             setFormData({ ...formData, content: value });
           }}
         />
-        <Button type="submit" gradientDuoTone="purpleToPink">
+
+        <button
+          type="submit"
+          className="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800"
+        >
           Publish
-        </Button>
+        </button>
         {publishError && (
           <Alert className="mt-5" color="failure">
             {publishError}

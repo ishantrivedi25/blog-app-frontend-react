@@ -3,12 +3,22 @@ import { Link } from "react-router-dom";
 
 import HeroBanner from "../components/HeroBanner";
 import PostCard from "../components/PostCard";
-import { POST } from "../dummyData";
+import { getPosts } from "../api/postService";
 
 export default function Home() {
-  const [posts, setPosts] = useState(POST);
+  const [posts, setPosts] = useState([]);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    getPosts()
+      .then((response) => {
+        if (response.status === "success") {
+          setPosts(response.data?.posts || []);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching posts:", error);
+      });
+  }, []);
 
   return (
     <div>
@@ -25,7 +35,7 @@ export default function Home() {
             </div>
             <Link
               to={"/search"}
-              className="text-lg text-teal-500 hover:underline text-center"
+              className="text-lg text-indigo-400 hover:underline text-center"
             >
               View all posts
             </Link>

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Modal, Table, Button } from "flowbite-react";
 import { useSelector } from "react-redux";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { deletePost, getPosts } from "../../api/postService";
 
 export default function DashPosts() {
   const { currentUser } = useSelector((state) => state.user);
@@ -15,18 +16,22 @@ export default function DashPosts() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch(`/api/post/getposts?userId=${currentUser._id}`);
-        const data = await res.json();
-        if (res.ok) {
-          setUserPosts(data.posts);
-          if (data.posts.length < 9) {
-            setShowMore(false);
-          }
+        const response = await getPosts({ userId: currentUser._id });
+
+        if (response.status === "error") {
+          console.log(response.message);
+          return;
+        }
+
+        setUserPosts(response.data.posts);
+        if (response.data.posts.length < 9) {
+          setShowMore(false);
         }
       } catch (error) {
         console.log(error.message);
       }
     };
+
     if (currentUser.isAdmin) {
       fetchPosts();
     }
@@ -36,15 +41,20 @@ export default function DashPosts() {
     const startIndex = userPosts.length;
 
     try {
-      const res = await fetch(
-        `/api/post/getposts?userId=${currentUser._id}&startIndex=${startIndex}`
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setUserPosts((prev) => [...prev, ...data.posts]);
-        if (data.posts.length < 9) {
-          setShowMore(false);
-        }
+      const response = await getPosts({
+        userId: currentUser._id,
+        startIndex: startIndex,
+      });
+
+      if (response.status === "error") {
+        console.log(response.message);
+        return;
+      }
+
+      setUserPosts((prev) => [...prev, ...response.data.posts]);
+
+      if (response.data.posts.length < 9) {
+        setShowMore(false);
       }
     } catch (error) {
       console.log(error.message);
@@ -55,20 +65,16 @@ export default function DashPosts() {
     setShowModal(false);
 
     try {
-      const res = await fetch(
-        `/api/post/deletepost/${postIdToDelete}/${currentUser._id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        console.log(data.message);
-      } else {
-        setUserPosts((prev) =>
-          prev.filter((post) => post._id !== postIdToDelete)
-        );
+      const response = await deletePost(postIdToDelete);
+
+      if (response.status === "error") {
+        console.log(response.message);
+        return;
       }
+
+      setUserPosts((prev) =>
+        prev.filter((post) => post._id !== postIdToDelete)
+      );
     } catch (error) {
       console.log(error.message);
     }
@@ -89,8 +95,8 @@ export default function DashPosts() {
                 <span>Edit</span>
               </Table.HeadCell>
             </Table.Head>
-            {userPosts.map((post) => (
-              <Table.Body className="divide-y">
+            {userPosts.map((post, index) => (
+              <Table.Body key={index} className="divide-y">
                 <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
                   <Table.Cell>
                     {new Date(post.updatedAt).toLocaleDateString()}
@@ -126,7 +132,7 @@ export default function DashPosts() {
                   </Table.Cell>
                   <Table.Cell>
                     <Link
-                      className="text-teal-500 hover:underline"
+                      className="text-indigo-400 hover:underline"
                       to={`/update-post/${post._id}`}
                     >
                       <span>Edit</span>
@@ -139,7 +145,7 @@ export default function DashPosts() {
           {showMore && (
             <button
               onClick={handleShowMore}
-              className="w-full text-teal-500 self-center text-sm py-7"
+              className="w-full text-indigo-400 self-center text-sm py-7"
             >
               Show more
             </button>
@@ -163,7 +169,7 @@ export default function DashPosts() {
             </h3>
             <div className="flex justify-center gap-4">
               <Button color="failure" onClick={handleDeletePost}>
-                Yes, I'm sure
+                {"Yes, I'm sure"}
               </Button>
               <Button color="gray" onClick={() => setShowModal(false)}>
                 No, cancel
